@@ -1,13 +1,13 @@
 # MyInfrastructure
 
-Infrastructure as Code (IaC) repository using Terraform to provision AWS resources.
+Infrastructure as Code (IaC) repository using Terraform to provision Azure resources.
 
 ## Structure
 
 ```
 MyInfrastructure/
 ├── terraform/
-│   ├── main.tf        # AWS resources (S3, EC2)
+│   ├── main.tf        # Azure resources (ADLS Gen2, Functions, AI Foundry)
 │   ├── variables.tf   # Input variables
 │   └── outputs.tf     # Output values
 └── .github/
@@ -17,8 +17,17 @@ MyInfrastructure/
 
 ## Resources Provisioned
 
-- **S3 Bucket** — versioned storage bucket per environment
-- **EC2 Instance** — application server (t3.micro by default)
+| Resource | Azure Service | Description |
+|----------|--------------|-------------|
+| **ADLS Gen2** | Azure Data Lake Storage Gen2 | HNS-enabled storage with `raw`, `processed`, `curated` filesystems |
+| **Azure Functions** | Linux Consumption Plan (Y1) | Python 3.11 serverless function app with App Insights |
+| **Azure AI Foundry** | AI Foundry Hub + Project | AI hub backed by Key Vault and dedicated storage |
+
+## Prerequisites
+
+- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.3.0
+- Azure CLI authenticated (`az login`) or a Service Principal
+- An Azure Subscription ID
 
 ## Usage
 
@@ -29,25 +38,35 @@ cd terraform
 terraform init
 
 # Preview changes
-terraform plan -var="environment=dev"
+terraform plan -var="subscription_id=<YOUR_SUBSCRIPTION_ID>" -var="environment=dev"
 
 # Apply
-terraform apply -var="environment=dev"
+terraform apply -var="subscription_id=<YOUR_SUBSCRIPTION_ID>" -var="environment=dev"
 
 # Destroy
-terraform destroy -var="environment=dev"
+terraform destroy -var="subscription_id=<YOUR_SUBSCRIPTION_ID>" -var="environment=dev"
 ```
 
 ## Variables
 
-| Name           | Description                   | Default          |
-|----------------|-------------------------------|------------------|
-| aws_region     | AWS region                    | us-east-1        |
-| project_name   | Project name prefix           | myinfrastructure |
-| environment    | Environment (dev/staging/prod)| dev              |
-| instance_type  | EC2 instance type             | t3.micro         |
-| ami_id         | AMI ID for EC2                | Amazon Linux 2   |
+| Name               | Description                           | Default   |
+|--------------------|---------------------------------------|-----------|
+| subscription_id    | Azure subscription ID (required)      | —         |
+| location           | Azure region                          | eastus    |
+| project_name       | Short name prefix (max 10 chars)      | myinfra   |
+| environment        | Environment (dev / staging / prod)    | dev       |
+| func_python_version| Python version for Function App       | 3.11      |
+| log_retention_days | Log Analytics retention in days       | 30        |
 
 ## CI/CD
 
-GitHub Actions runs `terraform validate` on every push and pull request to `main`.
+GitHub Actions runs `terraform fmt -check` and `terraform validate` on every push, and `terraform plan` on pull requests to `main`.
+
+### Required GitHub Secrets
+
+| Secret | Description |
+|--------|-------------|
+| `AZURE_CLIENT_ID` | Service principal app ID |
+| `AZURE_CLIENT_SECRET` | Service principal secret |
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
+| `AZURE_TENANT_ID` | Azure tenant ID |

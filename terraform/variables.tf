@@ -1,29 +1,44 @@
-variable "aws_region" {
-  description = "AWS region to deploy resources"
+variable "subscription_id" {
+  description = "Azure subscription ID"
   type        = string
-  default     = "us-east-1"
+}
+
+variable "location" {
+  description = "Azure region for all resources"
+  type        = string
+  default     = "eastus"
 }
 
 variable "project_name" {
-  description = "Name of the project"
+  description = "Short project name used in resource naming (lowercase, no special chars)"
   type        = string
-  default     = "myinfrastructure"
+  default     = "myinfra"
+
+  validation {
+    condition     = can(regex("^[a-z0-9]{1,10}$", var.project_name))
+    error_message = "project_name must be lowercase alphanumeric and max 10 characters (storage account name limits)."
+  }
 }
 
 variable "environment" {
   description = "Deployment environment (dev, staging, prod)"
   type        = string
   default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "environment must be one of: dev, staging, prod."
+  }
 }
 
-variable "instance_type" {
-  description = "EC2 instance type"
+variable "func_python_version" {
+  description = "Python runtime version for Azure Function App"
   type        = string
-  default     = "t3.micro"
+  default     = "3.11"
 }
 
-variable "ami_id" {
-  description = "AMI ID for the EC2 instance"
-  type        = string
-  default     = "ami-0c02fb55956c7d316" # Amazon Linux 2 (us-east-1)
+variable "log_retention_days" {
+  description = "Log Analytics workspace retention in days"
+  type        = number
+  default     = 30
 }
